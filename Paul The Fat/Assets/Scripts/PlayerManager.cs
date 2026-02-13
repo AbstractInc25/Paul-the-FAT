@@ -14,6 +14,8 @@ public class PlayerManager : MonoBehaviour
     private int _currentJumpAmount = 0;
 
     private bool AllowJump = true;
+    private bool StartJump = false;
+    private bool StartRotation = false;
 
     private PolygonCollider2D PolygonCollider;
     private Rigidbody2D body;
@@ -35,8 +37,12 @@ public class PlayerManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
+        _inputX = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
+
         if (_inputX.x > 0)
         {
+            
             transform.Rotate(0, 0, -_rotationSpeed * Time.deltaTime);
         }
         else if (_inputX.x < 0)
@@ -44,24 +50,37 @@ public class PlayerManager : MonoBehaviour
             transform.Rotate(0, 0, _rotationSpeed * Time.deltaTime);
         }
 
-
-        _inputX = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
-
         if (Input.GetKeyDown(KeyCode.Space) && AllowJump)
         {
-            body.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
-            transform.localRotation = Quaternion.Euler(0, 0, 90);
-            _currentJumpAmount++;
-            if (_currentJumpAmount >= _jumpAmount)
-            {
-                AllowJump = false;
-            }
+            StartRotation = true;
+            // rotation begins; actual jump happens after rotation completes
+            
         }
         if (isGrounded())
         {
             _currentJumpAmount = 0;
             AllowJump = true;
             
+        }
+
+        if (StartRotation)
+        {
+            Debug.Log("Start Rotation");
+            StartJump = rotate_until(90f);
+        }
+
+        if (StartJump)
+        {
+            StartRotation = false;
+            //transform.localRotation = Quaternion.Euler(0, 0, 90);
+            body.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
+            //transform.localRotation = Quaternion.Euler(0, 0, 90);
+            _currentJumpAmount++;
+            if (_currentJumpAmount >= _jumpAmount)
+            {
+                AllowJump = false;
+            }
+            StartJump = false;
         }
     }
 
@@ -71,4 +90,18 @@ public class PlayerManager : MonoBehaviour
         
         return raycastHit.collider != null;
     }
+
+    private bool rotate_until(float targetAngle)
+    {
+        float currentAngle = transform.localEulerAngles.z;
+        float newAngle = Mathf.MoveTowardsAngle(currentAngle, targetAngle, _rotationSpeed * 20 * Time.deltaTime);
+        transform.localEulerAngles = new Vector3(0f, 0f, newAngle);
+        return Mathf.Abs(Mathf.DeltaAngle(newAngle, targetAngle)) < 0.01f;
+        
+    }
+    
+        
+        
+
+    
 }
