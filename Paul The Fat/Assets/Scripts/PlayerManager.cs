@@ -39,13 +39,17 @@ public class PlayerManager : MonoBehaviour
     {
         
         _inputX = new Vector2(Input.GetAxisRaw("Horizontal"), 0);
+        if (isTouchingRight() || isTouchingLeft())
+        {
+            body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+        }
 
-        if (_inputX.x > 0)
+        if (_inputX.x > 0 && !isTouchingRight())
         {
             
             transform.Rotate(0, 0, -_rotationSpeed * Time.deltaTime);
         }
-        else if (_inputX.x < 0)
+        else if (_inputX.x < 0 && !isTouchingLeft())
         {
             transform.Rotate(0, 0, _rotationSpeed * Time.deltaTime);
         }
@@ -66,7 +70,7 @@ public class PlayerManager : MonoBehaviour
         if (StartRotation)
         {
             Debug.Log("Start Rotation");
-            StartJump = rotate_until(90f);
+            StartJump = rotate_until(45f);
         }
 
         if (StartJump)
@@ -90,6 +94,22 @@ public class PlayerManager : MonoBehaviour
         
         return raycastHit.collider != null;
     }
+
+    private bool isTouchingRight()
+    {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(PolygonCollider.bounds.center, PolygonCollider.bounds.size, 0f, Vector2.right, 0.1f, groundLayer);
+        
+        return raycastHit.collider != null;
+    }
+
+    private bool isTouchingLeft()
+    {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(PolygonCollider.bounds.center, PolygonCollider.bounds.size, 0f, Vector2.left, 0.1f, groundLayer);
+        
+        return raycastHit.collider != null;
+    }
+
+
 
     private bool rotate_until(float targetAngle)
     {
