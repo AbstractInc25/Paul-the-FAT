@@ -69,7 +69,6 @@ public class PlayerManager : MonoBehaviour
 
         if (StartRotation)
         {
-            Debug.Log("Start Rotation");
             StartJump = rotate_until(45f);
         }
 
