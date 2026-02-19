@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerManager : MonoBehaviour
 {
@@ -11,7 +12,15 @@ public class PlayerManager : MonoBehaviour
     private int _jumpAmount = 4;
     [SerializeField]
     private LayerMask groundLayer;
+    [SerializeField]
+    private LayerMask hazardLayer;
+    [SerializeField]
+    private LayerMask BoundsLayer;
+    private Coroutine boundsCoroutine = null;
+    private float boundsDelay = 2f;
     private int _currentJumpAmount = 0;
+
+    private Scene currentScene;
 
     private bool AllowJump = true;
     private bool StartJump = false;
@@ -25,6 +34,8 @@ public class PlayerManager : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         PolygonCollider = GetComponent<PolygonCollider2D>();
+
+        currentScene = SceneManager.GetActiveScene();
         
     }
 
@@ -67,6 +78,20 @@ public class PlayerManager : MonoBehaviour
             
         }
 
+        if (is_out_of_bounds())
+        {
+            if (boundsCoroutine == null)
+            {
+                boundsCoroutine = StartCoroutine(ResetAfterDelay(boundsDelay));
+            }
+        }
+
+        if (isTouchingHazard())
+        {
+            SceneManager.LoadScene(currentScene.name);
+            return;
+        }
+
         if (StartRotation)
         {
             StartJump = rotate_until(45f);
@@ -92,6 +117,36 @@ public class PlayerManager : MonoBehaviour
         RaycastHit2D raycastHit = Physics2D.BoxCast(PolygonCollider.bounds.center, PolygonCollider.bounds.size, 0f, Vector2.down, 0.1f, groundLayer);
         
         return raycastHit.collider != null;
+    }
+
+    private bool is_out_of_bounds()
+    {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(PolygonCollider.bounds.center, PolygonCollider.bounds.size, 0f, Vector2.down, 0.1f, BoundsLayer);
+        
+        return raycastHit.collider == null;
+    }
+
+    private bool isTouchingHazard()
+    {
+        Collider2D col = Physics2D.OverlapBox(PolygonCollider.bounds.center, PolygonCollider.bounds.size, 0f, hazardLayer);
+        return col != null;
+    }
+
+    private System.Collections.IEnumerator ResetAfterDelay(float delay)
+    {
+        float t = 0f;
+        while (t < delay)
+        {
+            if (!is_out_of_bounds())
+            {
+                boundsCoroutine = null;
+                yield break;
+            }
+            t += Time.deltaTime;
+            yield return null;
+        }
+        boundsCoroutine = null;
+        SceneManager.LoadScene(currentScene.name);
     }
 
     private bool isTouchingRight()
